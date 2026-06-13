@@ -1,5 +1,5 @@
 from .extensions import db
-from .models import Appeal, Grade, Student
+from .models import Appeal, Grade, Student, TeacherCourse
 
 
 def seed_demo_data():
@@ -13,6 +13,15 @@ def seed_demo_data():
     ]
     db.session.add_all(students)
     db.session.flush()
+
+    teacher_courses = [
+        TeacherCourse(teacher_name="陈老师", course_code="CS101", course_name="程序设计基础", credit=4),
+        TeacherCourse(teacher_name="陈老师", course_code="CS102", course_name="数据结构", credit=4),
+        TeacherCourse(teacher_name="周老师", course_code="MA101", course_name="高等数学", credit=5),
+        TeacherCourse(teacher_name="刘老师", course_code="SE201", course_name="软件工程导论", credit=3),
+        TeacherCourse(teacher_name="赵老师", course_code="DS101", course_name="数据分析基础", credit=3),
+    ]
+    db.session.add_all(teacher_courses)
 
     grades = [
         Grade(student=students[0], course_code="CS101", course_name="程序设计基础", credit=4, score=92, semester="2025-2026-1", teacher="陈老师"),

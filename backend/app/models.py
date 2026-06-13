@@ -59,6 +59,25 @@ class Grade(db.Model):
         }
 
 
+class TeacherCourse(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    teacher_name = db.Column(db.String(80), nullable=False, index=True)
+    course_code = db.Column(db.String(40), nullable=False)
+    course_name = db.Column(db.String(120), nullable=False)
+    credit = db.Column(db.Float, nullable=False)
+
+    __table_args__ = (db.UniqueConstraint("teacher_name", "course_code", name="uq_teacher_course"),)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "teacherName": self.teacher_name,
+            "courseCode": self.course_code,
+            "courseName": self.course_name,
+            "credit": self.credit,
+        }
+
+
 class Appeal(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     grade_id = db.Column(db.Integer, db.ForeignKey("grade.id"), nullable=False)

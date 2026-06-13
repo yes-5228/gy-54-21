@@ -1,5 +1,5 @@
 import { Save } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "../api/client";
 import GradeTable from "../components/GradeTable";
 import Notice from "../components/Notice";
@@ -22,6 +22,8 @@ export default function TeacherPage() {
   const [grades, setGrades] = useState([]);
   const [notice, setNotice] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [teachers, setTeachers] = useState([]);
+  const [teacherCourses, setTeacherCourses] = useState([]);
 
   const loadGrades = async () => {
     setGrades(await api.listGrades());
@@ -29,7 +31,42 @@ export default function TeacherPage() {
 
   useEffect(() => {
     loadGrades().catch((error) => setNotice({ type: "error", message: error.message }));
+    api.listTeachers().then(setTeachers).catch(() => {});
   }, []);
+
+  const handleTeacherChange = useCallback(async (teacherName) => {
+    setForm((current) => ({
+      ...current,
+      teacher: teacherName,
+      courseCode: "",
+      courseName: "",
+      credit: 3,
+    }));
+    if (!teacherName) {
+      setTeacherCourses([]);
+      return;
+    }
+    try {
+      const courses = await api.listTeacherCourses(teacherName);
+      setTeacherCourses(courses);
+    } catch {
+      setTeacherCourses([]);
+    }
+  }, []);
+
+  const handleCourseChange = useCallback((courseCode) => {
+    const course = teacherCourses.find((c) => c.courseCode === courseCode);
+    if (course) {
+      setForm((current) => ({
+        ...current,
+        courseCode: course.courseCode,
+        courseName: course.courseName,
+        credit: course.credit,
+      }));
+    } else {
+      setForm((current) => ({ ...current, courseCode: "", courseName: "", credit: 3 }));
+    }
+  }, [teacherCourses]);
 
   const updateField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -75,6 +112,39 @@ export default function TeacherPage() {
       <div className="split-grid">
         <form className="panel form-grid" onSubmit={submit}>
           <label>
+            任课教师
+            <select value={form.teacher} onChange={(event) => handleTeacherChange(event.target.value)} required>
+              <option value="">请选择教师</option>
+              {teachers.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            学期
+            <input value={form.semester} onChange={(event) => updateField("semester", event.target.value)} required />
+          </label>
+          <label>
+            课程
+            <select
+              value={form.courseCode}
+              onChange={(event) => handleCourseChange(event.target.value)}
+              required
+              disabled={!form.teacher}
+            >
+              <option value="">{form.teacher ? "请选择课程" : "请先选择教师"}</option>
+              {teacherCourses.map((c) => (
+                <option key={c.courseCode} value={c.courseCode}>
+                  {c.courseCode} - {c.courseName}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            学分
+            <input min="0.5" step="0.5" type="number" value={form.credit} readOnly />
+          </label>
+          <label>
             学号
             <input value={form.studentNo} onChange={(event) => updateField("studentNo", event.target.value)} required />
           </label>
@@ -91,30 +161,11 @@ export default function TeacherPage() {
             <input value={form.className} onChange={(event) => updateField("className", event.target.value)} />
           </label>
           <label>
-            课程代码
-            <input value={form.courseCode} onChange={(event) => updateField("courseCode", event.target.value)} required />
-          </label>
-          <label>
-            课程名称
-            <input value={form.courseName} onChange={(event) => updateField("courseName", event.target.value)} required />
-          </label>
-          <label>
-            学分
-            <input min="0.5" step="0.5" type="number" value={form.credit} onChange={(event) => updateField("credit", event.target.value)} required />
-          </label>
-          <label>
             成绩
             <input min="0" max="100" type="number" value={form.score} onChange={(event) => updateField("score", event.target.value)} required />
           </label>
-          <label>
-            学期
-            <input value={form.semester} onChange={(event) => updateField("semester", event.target.value)} required />
-          </label>
-          <label>
-            任课教师
-            <input value={form.teacher} onChange={(event) => updateField("teacher", event.target.value)} required />
-          </label>
-          <button className="primary-action" disabled={saving} type="submit">
+          <label />
+          <button className="primary-action" disabled={saving || !form.teacher || !form.courseCode} type="submit">
             <Save size={18} />
             {saving ? "保存中" : "保存成绩"}
           </button>

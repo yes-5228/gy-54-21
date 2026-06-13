@@ -29,6 +29,8 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(payload),
     }),
+  listTeachers: () => request("/grades/teachers"),
+  listTeacherCourses: (teacher) => request(`/grades/teacher-courses?teacher=${encodeURIComponent(teacher)}`),
   getTranscript: (studentNo) => request(`/students/${studentNo}/transcript`),
   listAppeals: () => request("/appeals"),
   createAppeal: (payload) =>
